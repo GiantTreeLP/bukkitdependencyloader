@@ -7,10 +7,51 @@
     <groupId>com.github.gianttreelp</groupId>
     <artifactId>bukkitdependencyloader</artifactId>
     <version>0.2-b${env.BUILDNR}</version>
+    <packaging>jar</packaging>
+
+    <name>bukkit-dependency-loader</name>
+    <description>A plugin to dynamically download and load maven artifacts into the class path of Bukkit or its forks.
+    </description>
+    <url>https://github.com/GiantTreeLP/bukkitdependencyloader/</url>
+
+    <licenses>
+        <license>
+            <name>GNU GENERAL PUBLIC LICENSE</name>
+            <url>https://github.com/GiantTreeLP/bukkitdependencyloader/blob/master/LICENSE.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <developerConnection>scm:git:git@github.com:GiantTreeLP/bukkitdependencyloader.git</developerConnection>
+        <connection>scm:git:git://github.com/GiantTreeLP/bukkitdependencyloader.git</connection>
+        <url>https://github.com/GiantTreeLP/bukkitdependencyloader/tree/master</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>gianttree</id>
+            <name>Marvin K</name>
+            <url>https://github.com/GiantTreeLP</url>
+            <email>webmaster@gianttree.de</email>
+        </developer>
+    </developers>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
@@ -54,14 +95,33 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/main/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>3.0.1</version>
                 <executions>
                     <execution>
-                        <phase>package</phase>
+                        <id>attach-sources</id>
                         <goals>
-                            <goal>jar</goal>
+                            <goal>jar-no-fork</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -72,10 +132,13 @@
                 <version>2.10.4</version>
                 <executions>
                     <execution>
-                        <phase>package</phase>
+                        <id>attach-javadocs</id>
                         <goals>
-                            <goal>aggregate-jar</goal>
+                            <goal>jar</goal>
                         </goals>
+                        <configuration>
+                            <source>src/main/java</source>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -92,6 +155,31 @@
                         <configuration>
                             <minimizeJar>true</minimizeJar>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
