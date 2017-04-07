@@ -20,6 +20,9 @@ import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
 import org.eclipse.aether.transport.http.HttpTransporterFactory;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -28,19 +31,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * This class downloads an {@link Artifact} using Eclipse Aether and loads it into the classpath.
  * The Apache Maven repository is added by default, as is the local repository for storing
  * downloaded artifacts.
- *
+ * <p>
  * Example usage:
  * <code>
  * // Loads the kotlin runtime into the classpath
  * DependencyLoader loader = DependencyLoaderPlugin.forPlugin(this);
  * if(!loader.isArtifactLoaded("org.jetbrains.kotlin", "kotlin-stdlib", "1.1.1")) {
- *      loader.loadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", "1.1.1");
+ * loader.loadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", "1.1.1");
  * }
  * </code>
  */
@@ -54,9 +56,9 @@ public class DependencyLoader {
 
     /**
      * This is the {@link Plugin} that created this {@link DependencyLoader}
-     * We track the plugin in order to write to its log.
+     * We track the plugin in order to write to its log and load the artifacts into its classloader.
      */
-    private Plugin plugin;
+    private JavaPlugin plugin;
 
     /**
      * A list of type {@link RemoteRepository}
@@ -96,36 +98,6 @@ public class DependencyLoader {
     }
 
     /**
-     * Checks whether a specific artifact has already been loaded.
-     * This only checks artifacts provided by this plugin and not any externally loaded classes.
-     *
-     * @param groupId    the groupId of the artifact
-     * @param artifactId the artifactId of the artifact
-     * @param version    the version of the artifact to check
-     * @return whether the artifact has been successfully loaded
-     * @see #loadArtifact(String, String, String)
-     * @see #loadArtifact(String)
-     * @see #isArtifactLoaded(String)
-     */
-    public static boolean isArtifactLoaded(String groupId, String artifactId, String version) {
-        return artifacts.contains(new DefaultArtifact(groupId, artifactId, "jar", version));
-    }
-
-    /**
-     * Checks whether a specific artifact has already been loaded.
-     * This only checks artifacts provided by this plugin and not any externally loaded classes.
-     *
-     * @param coordinates the concatenated coordinates of the artifact to check
-     * @return whether the artifact has been successfully loaded
-     * @see #loadArtifact(String, String, String)
-     * @see #loadArtifact(String)
-     * @see #isArtifactLoaded(String, String, String)
-     */
-    public static boolean isArtifactLoaded(String coordinates) {
-        return artifacts.contains(new DefaultArtifact(coordinates));
-    }
-
-    /**
      * Adds a {@link RemoteRepository} that will be used to resolve {@link Artifact}s.
      *
      * @param id  the identifier to identify the repository with
@@ -144,8 +116,6 @@ public class DependencyLoader {
      * @param version    the version of the artifact to load
      * @return whether the artifact has been successfully loaded
      * @see #loadArtifact(String)
-     * @see #isArtifactLoaded(String, String, String)
-     * @see #isArtifactLoaded(String)
      */
     public boolean loadArtifact(String groupId, String artifactId, String version) {
         plugin.getLogger().info(String.format("Loading artifact %s:%s:%s", groupId, artifactId, version));
@@ -160,8 +130,6 @@ public class DependencyLoader {
      * @param coordinates the concatenated coordinates of the artifact to load
      * @return whether the artifact has been successfully loaded
      * @see #loadArtifact(String, String, String)
-     * @see #isArtifactLoaded(String, String, String)
-     * @see #isArtifactLoaded(String)
      */
     public boolean loadArtifact(String coordinates) {
         plugin.getLogger().info(String.format("Loading artifact %s", coordinates));
@@ -170,13 +138,12 @@ public class DependencyLoader {
     }
 
     /**
-     * Loads an artifact into the classpath.
+     * Loads an {@link Artifact} into the classpath.
      * <p>
      * This method builds an {@link ArtifactRequest} to resolve the artifact that has been passed in.
-     * A {@link URLClassLoader} is used to download and load the artifact into the path.
-     * <p>
-     * Exceptions are caught and will be printed; in turn <code>false</code>
-     * will be returned in case of an exception.
+     * It then loads the artifact into the {@link Plugin}'s classpath.
+     *
+     * Returns early, if an artifact is already loaded.
      *
      * @param artifact the artifact to download and load into the classpath
      * @return whether the artifact has been loaded successfully
@@ -193,12 +160,34 @@ public class DependencyLoader {
             return false;
         }
         artifact = artifactResult.getArtifact();
+        return loadArtifactIntoClassPath(artifact);
+    }
+
+    /**
+     * This loads an {@link Artifact} into the {@link #plugin}'s
+     *
+     * A {@link URLClassLoader} is used to download and load the artifact into the path.
+     * <p>
+     * Exceptions are caught and will be printed; in turn <code>false</code>
+     * will be returned in case of an exception.
+     * <p>
+     * @param artifact the artifact to load
+     * @return whether the artifact has been successfully loaded into the plugin's classpath
+     */
+    private boolean loadArtifactIntoClassPath(Artifact artifact) {
         try {
-            new URLClassLoader(new URL[]{artifact.getFile().toURI().toURL()});
+            Field fClassloader = JavaPlugin.class.getDeclaredField("classLoader");
+            fClassloader.setAccessible(true);
+            URLClassLoader ucl = (URLClassLoader) fClassloader.get(plugin);
+
+            Method mAddUrl = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+            mAddUrl.setAccessible(true);
+            mAddUrl.invoke(ucl, artifact.getFile().toURI().toURL());
+
             plugin.getLogger().info(String.format("Successfully loaded %s", artifact));
             artifacts.add(artifact);
             return true;
-        } catch (MalformedURLException e) {
+        } catch (MalformedURLException | NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             e.printStackTrace();
             return false;
         }
