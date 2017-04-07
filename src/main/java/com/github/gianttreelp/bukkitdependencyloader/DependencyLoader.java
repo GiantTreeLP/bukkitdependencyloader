@@ -44,7 +44,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
  * }
  * </code>
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
+@SuppressWarnings({"WeakerAccess", "unused", "SameParameterValue"})
 public class DependencyLoader {
 
     /**
