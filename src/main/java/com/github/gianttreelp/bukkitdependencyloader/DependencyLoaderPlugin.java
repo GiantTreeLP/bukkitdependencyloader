@@ -55,6 +55,8 @@ public class DependencyLoaderPlugin extends JavaPlugin {
      */
     private void loadOwnArtifacts() {
         DependencyLoader loader = DependencyLoaderPlugin.forPlugin(this);
+        loader.loadArtifact("org.slf4j", "slf4j-api", "1.7.25");
+        loader.loadArtifact("org.slf4j", "slf4j-jdk14", "1.7.25");
         loader.loadArtifact("org.eclipse.aether", "aether-impl", "1.1.0");
         loader.loadArtifact("org.eclipse.aether", "aether-connector-basic", "1.1.0");
         loader.loadArtifact("org.eclipse.aether", "aether-transport-http", "1.1.0");
