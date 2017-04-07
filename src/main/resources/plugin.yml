@@ -1,0 +1,4 @@
+name: BukkitDependencyLoader
+version: 1.0
+author: GiantTreeLP
+main: com.github.gianttreelp.bukkitdependencyloader.DependencyLoaderPlugin
