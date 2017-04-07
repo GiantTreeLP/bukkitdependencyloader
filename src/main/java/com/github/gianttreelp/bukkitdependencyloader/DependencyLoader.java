@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
  * This class downloads an {@link Artifact} using Eclipse Aether and loads it into the classpath.
  * The Apache Maven repository is added by default, as is the local repository for storing
  * downloaded artifacts.
- * <p>
+ *
  * Example usage:
  * <code>
  * // Loads the kotlin runtime into the classpath
@@ -43,7 +43,6 @@ import java.util.concurrent.ConcurrentSkipListSet;
  *      loader.loadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", "1.1.1");
  * }
  * </code>
- * <p>
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class DependencyLoader {
