@@ -86,11 +86,11 @@ public final class DependencyLoader {
      * This takes a {@link Plugin} as input to use its
      * {@link java.util.logging.Logger}
      *
-     * @param plugin the {@link Plugin} this dependency loader is meant to
+     * @param javaPlugin the {@link Plugin} this dependency loader is meant to
      *               work for.
      */
-    DependencyLoader(final JavaPlugin plugin) {
-        this.plugin = plugin;
+    DependencyLoader(final JavaPlugin javaPlugin) {
+        this.plugin = javaPlugin;
         DefaultServiceLocator locator =
                 MavenRepositorySystemUtils.newServiceLocator();
         locator.addService(RepositoryConnectorFactory.class,
