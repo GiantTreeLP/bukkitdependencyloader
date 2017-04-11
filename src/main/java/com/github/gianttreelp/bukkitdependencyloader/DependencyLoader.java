@@ -27,10 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class downloads an {@link Artifact} using Eclipse Aether and loads it
@@ -40,27 +37,20 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * Example usage:
  * <code>
- * // Loads the kotlin runtime into the classpath
+ * // Loads the kotlin runtime into the classpath.
  * DependencyLoader loader = DependencyLoaderPlugin.forPlugin(this);
  * loader.loadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", "1.1.1");
- * }
  * </code>
  */
 @SuppressWarnings({"WeakerAccess", "unused", "SameParameterValue"})
 public final class DependencyLoader {
 
     /**
-     * A {@link Set} of {@link Artifact}s that are already loaded.
-     */
-    private static Set<Artifact> artifacts =
-            Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-    /**
      * This is the {@link Plugin} that created this {@link DependencyLoader}
      * We track the plugin in order to write to its log and load the
      * artifacts into its classloader.
      */
-    private final JavaPlugin plugin;
+    private final Plugin plugin;
 
     /**
      * A list of type {@link RemoteRepository}
@@ -87,7 +77,7 @@ public final class DependencyLoader {
      * {@link java.util.logging.Logger}
      *
      * @param javaPlugin the {@link Plugin} this dependency loader is meant to
-     *               work for.
+     *                   work for.
      */
     DependencyLoader(final JavaPlugin javaPlugin) {
         this.plugin = javaPlugin;
@@ -216,7 +206,6 @@ public final class DependencyLoader {
 
             plugin.getLogger().info(String.format(
                     "Successfully loaded %s", artifact));
-            artifacts.add(artifact);
             return true;
         } catch (MalformedURLException | NoSuchFieldException
                 | IllegalAccessException | NoSuchMethodException

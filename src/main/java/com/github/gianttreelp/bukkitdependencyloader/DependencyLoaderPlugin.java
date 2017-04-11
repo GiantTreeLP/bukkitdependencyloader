@@ -1,15 +1,13 @@
 package com.github.gianttreelp.bukkitdependencyloader;
 
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.eclipse.aether.artifact.Artifact;
 
 /**
- * This {@link Plugin} offers a way to get a {@link DependencyLoader} for
- * your plugin and use it to dynamically load
+ * This {@link org.bukkit.plugin.Plugin} offers a way to get a
+ * {@link DependencyLoader} for your plugin and use it to dynamically load
  * {@link org.eclipse.aether.artifact.Artifact}s at runtime  without adding
  * them to the jar.
- * <p>
+ *
  * This allows other plugins to reuse artifacts and in turn reduces the file
  * size
  * of many plugins.
@@ -32,7 +30,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     }
 
     /**
-     * Creates a new {@link DependencyLoader} for a given {@link Plugin}
+     * Creates a new {@link DependencyLoader} for a given
+     * {@link org.bukkit.plugin.Plugin}.
      *
      * @param plugin the plugin that requested the dependency loader
      * @return a new instance of {@link DependencyLoader}
@@ -50,7 +49,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
 
 
     /**
-     * Loads its own {@link Artifact}s as a way to test the connection and
+     * Loads its own {@link org.eclipse.aether.artifact.Artifact}s as a way
+     * to test the connection and
      * to provide those artifacts completely,
      * because some functionality might be lost when minifying the plugin.
      * <p>
