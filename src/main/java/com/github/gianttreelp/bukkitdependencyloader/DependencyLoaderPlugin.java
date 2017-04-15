@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
 
 /**
  * This {@link org.bukkit.plugin.Plugin} offers a way to get a
@@ -43,13 +44,27 @@ import java.util.jar.JarFile;
  * size
  * of many plugins.
  * <p>
- * Example usage:
+ * Specification of the dependencies.conf file:
  * <p>
- * <code>
- * // Loads the kotlin runtime into the classpath
- * DependencyLoader loader = DependencyLoaderPlugin.forPlugin(this);
- * loader.loadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", "1.1.1");
- * </code>
+ * <ul>
+ * <li>Lines that do <i>not</i> start with "artifact=" or "repository="
+ * are ignored.
+ * </li>
+ * <li>
+ * The proper format for an artifact line is:<br>
+ * artifact=&lt;groupId&gt;:&lt;artifactId&gt;[:&lt;
+ * extension&gt;[:&lt;classifier
+ * &gt;]]:&lt;version&gt;
+ * </li>
+ * <li>
+ * The proper format for a repository is:<br>
+ * repository=&lt;id&gt;:&lt;url&gt;
+ * </li>
+ * <li>
+ * For an example, look at this plugin's
+ * <a href="https://github.com/GiantTreeLP/bukkitdependencyloader/blob/master/src/main/resources/dependencies.conf">dependecies.conf</a>
+ * </li>
+ * </ul>
  */
 @SuppressWarnings("WeakerAccess")
 public final class DependencyLoaderPlugin extends JavaPlugin {
@@ -84,9 +99,10 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     }
 
     /**
-     * Scans the `plugins` directory for Plugins and loads the artifacts
-     * present in the `dependencies.conf` file in the root of the plugin's
-     * `.jar`file.
+     * Scans the {@code plugins} directory for Plugins and loads the
+     * artifacts
+     * present in the {@code dependencies.conf} file in the root of the
+     * plugin's {@code .jar} file.
      */
     private void scanPluginsAndLoadArtifacts() {
         File pluginsDirectory = new File(getDataFolder().getParentFile()
@@ -130,13 +146,25 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
                 String dependenciesString = dependenciesStringBuilder
                         .toString();
 
-                for (String line : dependenciesString.split("\r?\n")) {
+                Stream<String> split = Arrays.stream(dependenciesString.split(
+                        "\r?\n"));
+                split.forEach(line -> {
                     if (line.startsWith(REPOSITORY_IDENTIFIER)) {
                         parseRepository(line);
                     } else if (line.startsWith(ARTIFACT_IDENTIFIER)) {
-                        parseArtifact(line);
+                        if (parseArtifact(line)) {
+                            getLogger().info(String.format("Successfully "
+                                    + "loaded %s", line));
+                        } else {
+                            getLogger().severe(String.format("Error loading "
+                                            + "%s. Please check your network "
+                                            + "connection and report"
+                                            + "this to the developer of %s",
+                                    line,
+                                    pluginJar.getName()));
+                        }
                     }
-                }
+                });
             }
         });
     }
@@ -153,9 +181,13 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      *
      * @param line the line of text to parse; it is known that it starts with
      *             {@link #ARTIFACT_IDENTIFIER}
+     *
+     *             @return whether the artifact has been successfully loaded
+     *             into the class path.
      */
-    private void parseArtifact(final String line) {
-        dependencyLoader.loadArtifact(line.replace(ARTIFACT_IDENTIFIER, ""));
+    private boolean parseArtifact(final String line) {
+        return dependencyLoader.loadArtifact(line.replace(ARTIFACT_IDENTIFIER,
+                ""));
     }
 
     /**
@@ -190,7 +222,6 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * loader.loadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", "1.1.1");
      * </code>
      */
-    @SuppressWarnings({"WeakerAccess", "unused", "SameParameterValue"})
     private final class DependencyLoader {
 
         /**
@@ -252,36 +283,11 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
         /**
          * Builds an {@link Artifact} and passes it off to be loaded into the
          * classpath.
-         * This method uses the Maven syntax.
-         *
-         * @param groupId    the groupId of the artifact
-         * @param artifactId the artifactId of the artifact
-         * @param version    the version of the artifact to load
-         * @return whether the artifact has been successfully loaded
-         * @see #loadArtifact(String)
-         */
-        public boolean loadArtifact(final String groupId,
-                                    final String artifactId,
-                                    final String version) {
-            getLogger().info(
-                    String.format(
-                            "Loading artifact %s:%s:%s",
-                            groupId, artifactId, version));
-            Artifact artifact =
-                    new DefaultArtifact(
-                            groupId, artifactId, "jar", version);
-            return loadArtifact(artifact);
-        }
-
-        /**
-         * Builds an {@link Artifact} and passes it off to be loaded into the
-         * classpath.
          * This method uses the concatenated (Gradle?) syntax.
          *
          * @param coordinates the concatenated coordinates of the artifact
          *                    to load
          * @return whether the artifact has been successfully loaded
-         * @see #loadArtifact(String, String, String)
          */
         public boolean loadArtifact(final String coordinates) {
             getLogger().info(
@@ -323,7 +329,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
          * A {@link URLClassLoader} is used to download and load the artifact
          * into the path.
          * <p>
-         * Exceptions are caught and will be printed; in turn <code>false</code>
+         * Exceptions are caught and will be printed; in turn {@code false}
          * will be returned in case of an exception.
          * <p>
          *
@@ -340,8 +346,6 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
                         "addURL", URL.class);
                 mAddUrl.setAccessible(true);
                 mAddUrl.invoke(ucl, artifact.getFile().toURI().toURL());
-
-                getLogger().info(String.format("Loaded artifact %s", artifact));
                 return true;
             } catch (IllegalAccessException | MalformedURLException
                     | InvocationTargetException
