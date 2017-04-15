@@ -3,7 +3,6 @@ package com.github.gianttreelp.bukkitdependencyloader;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
@@ -57,10 +56,25 @@ import java.util.jar.JarFile;
 @SuppressWarnings("WeakerAccess")
 public final class DependencyLoaderPlugin extends JavaPlugin {
 
+    /**
+     * The name of the file we search for in the plugin's jar file.
+     */
     private static final String DEPENDENCIES_CONF = "dependencies.conf";
+
+    /**
+     * The identifier to identify a repository line.
+     */
     private static final String REPOSITORY_IDENTIFIER = "repository=";
+
+    /**
+     * The identifier to identify an artifact line.
+     */
     private static final String ARTIFACT_IDENTIFIER = "artifact=";
 
+    /**
+     * The {@link DependencyLoader} we use to load artifacts.
+     * Subject for removal.
+     */
     private DependencyLoader dependencyLoader;
 
     /**
@@ -91,23 +105,23 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
         File[] plugins = pluginsDirectory.listFiles((dir, name) -> name
                 .endsWith(".jar"));
         if (plugins == null) {
-            getLogger().severe("No plugins found! Please report this error " +
-                    "to the author of this plugin (BukkitDependencyLoader)");
+            getLogger().severe("No plugins found! Please report this error "
+                    + "to the author of this plugin (BukkitDependencyLoader)");
             throw new NullPointerException("plugins should never be null");
         }
         Arrays.stream(plugins).map(file -> {
             try {
                 return new JarFile(file);
             } catch (IOException e) {
-                getLogger().severe(String.format("Error reading %s, please " +
-                        "fix this and restart the server", file));
+                getLogger().severe(String.format("Error reading %s, please "
+                        + "fix this and restart the server", file));
                 getLogger().throwing(this.getClass().getName(),
                         "scanPluginsAndLoadArtifacts", e);
             }
             return null;
         }).forEach(pluginJar -> {
-            JarEntry dependenciesEntry = pluginJar.getJarEntry
-                    (DEPENDENCIES_CONF);
+            JarEntry dependenciesEntry = pluginJar.getJarEntry(
+                    DEPENDENCIES_CONF);
             if (dependenciesEntry != null) {
                 getLogger().info(String.format("Loading artifacts for %s",
                         pluginJar.getName()));
@@ -115,12 +129,12 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
                 try (InputStream dependenciesStream = pluginJar
                         .getInputStream(dependenciesEntry)) {
                     while (dependenciesStream.available() > 0) {
-                        dependenciesStringBuilder.appendCodePoint
-                                (dependenciesStream.read());
+                        dependenciesStringBuilder.appendCodePoint(
+                                dependenciesStream.read());
                     }
                 } catch (IOException e) {
-                    getLogger().severe("Error reading dependencies, please " +
-                            "fix this and restart the server");
+                    getLogger().severe("Error reading dependencies, please "
+                            + "fix this and restart the server");
                     getLogger().throwing(this.getClass().getName(),
                             "scanPluginsAndLoadArtifacts", e);
                 }
@@ -151,15 +165,14 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * @param line the line of text to parse; it is known that it starts with
      *             {@link #ARTIFACT_IDENTIFIER}
      */
-    private void parseArtifact(String line) {
-        line = line.replace(ARTIFACT_IDENTIFIER, "");
-        dependencyLoader.loadArtifact(line);
+    private void parseArtifact(final String line) {
+        dependencyLoader.loadArtifact(line.replace(ARTIFACT_IDENTIFIER, ""));
     }
 
     /**
      * Parses a line of text coming from
      * {@link #scanPluginsAndLoadArtifacts()} and adds a repository to the
-     * {@link #dependencyLoader}
+     * {@link #dependencyLoader}.
      * <p>
      * Repositories' syntax is:
      * <code>
@@ -169,15 +182,15 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * @param line the line of text to parse; it is known that it starts with
      *             {@link #REPOSITORY_IDENTIFIER}
      */
-    private void parseRepository(String line) {
+    private void parseRepository(final String line) {
         String[] split = line.replace(REPOSITORY_IDENTIFIER, "").split(":");
         dependencyLoader.addRepository(split[0], split[1]);
     }
 
 
     /**
-     * This class downloads an {@link Artifact} using Eclipse Aether and loads it
-     * into the classpath.
+     * This class downloads an {@link Artifact} using Eclipse Aether and
+     * loads it into the classpath.
      * The Apache Maven repository is added by default, as is the local
      * repository for storing downloaded artifacts.
      * <p>
@@ -205,8 +218,9 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
 
         /**
          * The {@link DefaultRepositorySystemSession} for resolving this
-         * {@link Plugin}'s artifacts.
-         * The same session is reused for each artifact of a {@link Plugin}.
+         * {@link org.bukkit.plugin.Plugin's artifacts.
+         * The same session is reused for each artifact of a
+         * {@link org.bukkit.plugin.Plugin}.
          */
         private DefaultRepositorySystemSession session;
 
@@ -259,7 +273,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
          * @return whether the artifact has been successfully loaded
          * @see #loadArtifact(String)
          */
-        public boolean loadArtifact(final String groupId, final String artifactId,
+        public boolean loadArtifact(final String groupId,
+                                    final String artifactId,
                                     final String version) {
             getLogger().info(
                     String.format(
@@ -276,7 +291,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
          * classpath.
          * This method uses the concatenated (Gradle?) syntax.
          *
-         * @param coordinates the concatenated coordinates of the artifact to load
+         * @param coordinates the concatenated coordinates of the artifact
+         *                    to load
          * @return whether the artifact has been successfully loaded
          * @see #loadArtifact(String, String, String)
          */
@@ -292,7 +308,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
          * <p>
          * This method builds an {@link ArtifactRequest} to resolve the artifact
          * that has been passed in.
-         * It then loads the artifact into the {@link Plugin}'s classpath.
+         * It then loads the artifact into the
+         * {@link org.bukkit.plugin.Plugin}'s classpath.
          * <p>
          * Returns early, if an artifact is already loaded.
          *
@@ -342,9 +359,9 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
 
                 getLogger().info(String.format("Loaded artifact %s", artifact));
                 return true;
-            } catch (IllegalAccessException | NoSuchFieldException |
-                    MalformedURLException | InvocationTargetException |
-                    NoSuchMethodException e) {
+            } catch (IllegalAccessException | NoSuchFieldException
+                    | MalformedURLException | InvocationTargetException
+                    | NoSuchMethodException e) {
                 getLogger().throwing("DependencyLoader",
                         "loadArtifactIntoGlobalClassPath", e);
                 return false;
