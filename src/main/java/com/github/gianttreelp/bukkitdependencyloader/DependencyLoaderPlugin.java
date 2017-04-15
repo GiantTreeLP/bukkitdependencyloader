@@ -2,8 +2,8 @@ package com.github.gianttreelp.bukkitdependencyloader;
 
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.Server;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.java.JavaPluginLoader;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
@@ -83,13 +83,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     public DependencyLoaderPlugin() {
     }
 
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public void onEnable() {
-        super.onEnable();
+    public void onLoad() {
         dependencyLoader = new DependencyLoader();
         scanPluginsAndLoadArtifacts();
     }
@@ -346,7 +341,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
          */
         private boolean loadArtifactIntoClassPath(final Artifact artifact) {
             try {
-                Field fClassloader = Server.class.getDeclaredField(
+                Field fClassloader = JavaPluginLoader.class.getDeclaredField(
                         "classLoader");
                 fClassloader.setAccessible(true);
                 URLClassLoader ucl = (URLClassLoader) fClassloader.get(Bukkit
