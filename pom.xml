@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -10,22 +10,30 @@
     <packaging>jar</packaging>
 
     <name>bukkit-dependency-loader</name>
-    <description>A plugin to dynamically download and load maven artifacts into the class path of Bukkit or its forks.
+    <description>A plugin to dynamically download and load maven artifacts into
+        the class path of Bukkit or its forks.
     </description>
     <url>https://github.com/GiantTreeLP/bukkitdependencyloader/</url>
 
     <licenses>
         <license>
             <name>GNU GENERAL PUBLIC LICENSE</name>
-            <url>https://github.com/GiantTreeLP/bukkitdependencyloader/blob/master/LICENSE.txt</url>
+            <url>
+                https://github.com/GiantTreeLP/bukkitdependencyloader/blob/master/LICENSE.txt
+            </url>
             <distribution>repo</distribution>
         </license>
     </licenses>
 
     <scm>
-        <developerConnection>scm:git:git@github.com:GiantTreeLP/bukkitdependencyloader.git</developerConnection>
-        <connection>scm:git:git://github.com/GiantTreeLP/bukkitdependencyloader.git</connection>
-        <url>https://github.com/GiantTreeLP/bukkitdependencyloader/tree/master</url>
+        <developerConnection>
+            scm:git:git@github.com:GiantTreeLP/bukkitdependencyloader.git
+        </developerConnection>
+        <connection>
+            scm:git:git://github.com/GiantTreeLP/bukkitdependencyloader.git
+        </connection>
+        <url>https://github.com/GiantTreeLP/bukkitdependencyloader/tree/master
+        </url>
     </scm>
 
     <developers>
@@ -44,7 +52,8 @@
         </snapshotRepository>
         <repository>
             <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/
+            </url>
         </repository>
     </distributionManagement>
 
