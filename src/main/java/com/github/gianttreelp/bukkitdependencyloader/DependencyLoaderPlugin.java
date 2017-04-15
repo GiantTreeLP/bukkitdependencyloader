@@ -1,7 +1,6 @@
 package com.github.gianttreelp.bukkitdependencyloader;
 
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.JavaPluginLoader;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -23,7 +22,6 @@ import org.eclipse.aether.transport.http.HttpTransporterFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -81,10 +79,6 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * Empty constructor, we don't need to do anything here.
      */
     public DependencyLoaderPlugin() {
-    }
-
-    @Override
-    public void onLoad() {
         dependencyLoader = new DependencyLoader();
         scanPluginsAndLoadArtifacts();
     }
@@ -236,9 +230,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
             system = locator.getService(RepositorySystem.class);
             session = MavenRepositorySystemUtils.newSession();
             LocalRepository localRepo = new LocalRepository(
-                    Bukkit.getPluginManager()
-                            .getPlugin("BukkitDependencyLoader")
-                            .getDataFolder().getAbsolutePath() + "/.m2");
+                    getDataFolder().getAbsolutePath() + "/.m2");
             session.setLocalRepositoryManager(
                     system.newLocalRepositoryManager(session, localRepo));
             addRepository(
@@ -341,11 +333,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
          */
         private boolean loadArtifactIntoClassPath(final Artifact artifact) {
             try {
-                Field fClassloader = JavaPluginLoader.class.getDeclaredField(
-                        "classLoader");
-                fClassloader.setAccessible(true);
-                URLClassLoader ucl = (URLClassLoader) fClassloader.get(Bukkit
-                        .getServer());
+                URLClassLoader ucl = (URLClassLoader) JavaPluginLoader.class
+                        .getClassLoader();
 
                 Method mAddUrl = URLClassLoader.class.getDeclaredMethod(
                         "addURL", URL.class);
@@ -354,11 +343,13 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
 
                 getLogger().info(String.format("Loaded artifact %s", artifact));
                 return true;
-            } catch (IllegalAccessException | NoSuchFieldException
-                    | MalformedURLException | InvocationTargetException
+            } catch (IllegalAccessException | MalformedURLException
+                    | InvocationTargetException
                     | NoSuchMethodException e) {
                 getLogger().throwing("DependencyLoader",
                         "loadArtifactIntoGlobalClassPath", e);
+                getLogger().severe(String.format("Error loading artifact %s",
+                        artifact));
                 return false;
             }
         }
