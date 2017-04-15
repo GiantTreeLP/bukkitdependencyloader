@@ -77,7 +77,6 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     public void onEnable() {
         super.onEnable();
         dependencyLoader = new DependencyLoader();
-        //loadOwnArtifacts();
         scanPluginsAndLoadArtifacts();
     }
 
@@ -139,11 +138,37 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
         });
     }
 
+    /**
+     * Parses a line of text coming from
+     * {@link #scanPluginsAndLoadArtifacts()} and loads an artifact to the
+     * {@link #dependencyLoader}
+     * <p>
+     * Artifacts' syntax is the same as the implementation of the
+     * {@link DefaultArtifact}:
+     * {@code <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>},
+     * must not be {@code null}.
+     *
+     * @param line the line of text to parse; it is known that it starts with
+     *             {@link #ARTIFACT_IDENTIFIER}
+     */
     private void parseArtifact(String line) {
         line = line.replace(ARTIFACT_IDENTIFIER, "");
         dependencyLoader.loadArtifact(line);
     }
 
+    /**
+     * Parses a line of text coming from
+     * {@link #scanPluginsAndLoadArtifacts()} and adds a repository to the
+     * {@link #dependencyLoader}
+     * <p>
+     * Repositories' syntax is:
+     * <code>
+     * repository=<id>:<url>
+     * </code>
+     *
+     * @param line the line of text to parse; it is known that it starts with
+     *             {@link #REPOSITORY_IDENTIFIER}
+     */
     private void parseRepository(String line) {
         String[] split = line.replace(REPOSITORY_IDENTIFIER, "").split(":");
         dependencyLoader.addRepository(split[0], split[1]);
@@ -300,7 +325,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
          *
          * @param artifact the artifact to load
          * @return whether the artifact has been successfully loaded into the
-         * plugin's classpath
+         * server's classpath
          */
         private boolean loadArtifactIntoClassPath(final Artifact artifact) {
             try {
