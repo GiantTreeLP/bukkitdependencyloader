@@ -27,9 +27,9 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
@@ -37,14 +37,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- * This {@link org.bukkit.plugin.Plugin} offers a way to get a
- * {@link DependencyLoader} for your plugin and use it to dynamically load
- * {@link org.eclipse.aether.artifact.Artifact}s at runtime  without adding
- * them to the jar.
+ * This {@link org.bukkit.plugin.Plugin} offers a way to dynamically load
+ * {@link org.eclipse.aether.artifact.Artifact}s at runtime without adding
+ * them to a plugin's jar.
  * <p>
  * This allows other plugins to reuse artifacts and in turn reduces the file
- * size
- * of many plugins.
+ * size of many plugins.
  * <p>
  * Specification of the dependencies.conf file:
  * </p>
@@ -95,7 +93,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     private DependencyLoader dependencyLoader;
 
     /**
-     * Empty constructor, we don't need to do anything here.
+     * All the  work is kicked of here to make sure the dependencies are
+     * loaded before any other plugin is initialized.
      */
     public DependencyLoaderPlugin() {
         dependencyLoader = new DependencyLoader();
@@ -111,7 +110,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * @param directory the directory where the files reside
      * @param extension the extension to filter for, matches directories as
      *                  well.
-     * @return an Array containing all files satisfying the
+     * @return an array containing all files satisfying the
      * extensions' constraint
      */
     @SuppressWarnings("SameParameterValue")
@@ -122,7 +121,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     }
 
     /**
-     * Scans the {@code plugins} directory for Plugins and loads the
+     * Scans the {@code plugins} directory for plugins and loads the
      * artifacts
      * present in the {@code dependencies.conf} file in the root of the
      * plugin's {@code .jar} file.
@@ -199,8 +198,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     }
 
     /**
-     * Filter out {@link File} objects that may be directories and map each of
-     * them to a {@link JarFile}.
+     * Filter out {@link File} objects that are directories and map each of
+     * the actual files to a {@link JarFile}.
      *
      * @param jarFiles the files which will be mapped to JarFiles
      * @return A stream of JarFiles, safe for use.
@@ -225,9 +224,9 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * {@link #dependencyLoader}
      * <p>
      * Artifacts' syntax is the same as the implementation of the
-     * {@link DefaultArtifact}:
+     * {@link DefaultArtifact}:<br>
      * {@code <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>},
-     * must not be {@code null}.
+     * <br>and must not be {@code null}.
      *
      * @param line the line of text to parse; it is known that it starts with
      *             {@link #ARTIFACT_IDENTIFIER}
@@ -267,11 +266,10 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     private final class DependencyLoader {
 
         /**
-         * A list of type {@link RemoteRepository}
-         * This is unique for each instance to prevent malicious repositories
-         * from resolving artifacts from other repositories.
+         * A set of type {@link RemoteRepository}.
+         * Prevents duplicate repository entries.
          */
-        private List<RemoteRepository> repositories = new ArrayList<>();
+        private Set<RemoteRepository> repositories = new HashSet<>();
 
         /**
          * The {@link RepositorySystem} to use for resolving the artifacts.
