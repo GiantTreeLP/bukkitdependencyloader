@@ -101,16 +101,33 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     }
 
     /**
+     * List all files in the directory given and filters them for their
+     * extension.
+     * <p>
+     * This will find directories as well, filter them out manually!
+     *
+     * @param directory the directory where the files reside
+     * @param extension the extension to filter for, matches directories as
+     *                  well.
+     * @return an Array containing all files satisfying the
+     * extensions' constraint
+     */
+    @SuppressWarnings("SameParameterValue")
+    private static File[] getFilesWithExtension(File directory, String
+            extension) {
+        return directory.listFiles((dir, name) -> name
+                .endsWith(extension));
+    }
+
+    /**
      * Scans the {@code plugins} directory for Plugins and loads the
      * artifacts
      * present in the {@code dependencies.conf} file in the root of the
      * plugin's {@code .jar} file.
      */
     private void scanPluginsAndLoadArtifacts() {
-        File pluginsDirectory = new File(getDataFolder().getParentFile()
-                .getAbsolutePath());
-        File[] plugins = pluginsDirectory.listFiles((dir, name) -> name
-                .endsWith(".jar"));
+        File[] plugins = getFilesWithExtension(getDataFolder().getParentFile(),
+                ".jar");
         if (plugins == null) {
             getLogger().severe("No plugins found! Please report this error "
                     + "to the author of this plugin (BukkitDependencyLoader)");
