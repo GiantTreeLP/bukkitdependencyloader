@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * This {@link org.bukkit.plugin.Plugin} offers a way to get a
@@ -114,41 +116,20 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
                     + "to the author of this plugin (BukkitDependencyLoader)");
             throw new NullPointerException("plugins should never be null");
         }
-        Arrays.stream(plugins).map(file -> {
-            try {
-                return new JarFile(file);
-            } catch (IOException e) {
-                getLogger().severe(String.format("Error reading %s, please "
-                        + "fix this and restart the server", file));
-                getLogger().throwing(this.getClass().getName(),
-                        "scanPluginsAndLoadArtifacts", e);
-            }
-            return null;
-        }).forEach(pluginJar -> {
+
+        mapToJarFile(plugins).forEach(pluginJar -> {
             JarEntry dependenciesEntry = pluginJar.getJarEntry(
                     DEPENDENCIES_CONF);
             if (dependenciesEntry != null) {
                 getLogger().info(String.format("Loading artifacts for %s",
                         pluginJar.getName()));
-                StringBuilder dependenciesStringBuilder = new StringBuilder();
-                try (InputStream dependenciesStream = pluginJar
-                        .getInputStream(dependenciesEntry)) {
-                    while (dependenciesStream.available() > 0) {
-                        dependenciesStringBuilder.appendCodePoint(
-                                dependenciesStream.read());
-                    }
-                } catch (IOException e) {
-                    getLogger().severe("Error reading dependencies, please "
-                            + "fix this and restart the server");
-                    getLogger().throwing(this.getClass().getName(),
-                            "scanPluginsAndLoadArtifacts", e);
-                }
-                String dependenciesString = dependenciesStringBuilder
-                        .toString();
 
-                Stream<String> split = Arrays.stream(dependenciesString.split(
+                String dependenciesString = getStringFromEntry(pluginJar,
+                        dependenciesEntry);
+
+                Stream<String> splitStream = Arrays.stream(dependenciesString.split(
                         "\r?\n"));
-                split.forEach(line -> {
+                splitStream.forEach(line -> {
                     if (line.startsWith(REPOSITORY_IDENTIFIER)) {
                         parseRepository(line);
                     } else if (line.startsWith(ARTIFACT_IDENTIFIER)) {
@@ -170,6 +151,53 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     }
 
     /**
+     * Reads a {@link ZipEntry}, decompresses it and returns the contents as a
+     * String.
+     * No validation is done except for checking the presence of the entry.
+     *
+     * @param file  the file to read the entry from.
+     * @param entry the entry to read and return as a String.
+     * @return a string representation of the decompressed contents of the
+     * entry.
+     */
+    private String getStringFromEntry(ZipFile file,
+                                      ZipEntry entry) {
+        StringBuilder dependenciesStringBuilder = new StringBuilder();
+        try (InputStream dependenciesStream = file
+                .getInputStream(entry)) {
+            while (dependenciesStream.available() > 0) {
+                dependenciesStringBuilder.appendCodePoint(
+                        dependenciesStream.read());
+            }
+        } catch (IOException e) {
+            getLogger().severe("Error reading dependencies, please "
+                    + "fix this and restart the server");
+            getLogger().throwing(this.getClass().getName(),
+                    "scanPluginsAndLoadArtifacts", e);
+        }
+        return dependenciesStringBuilder
+                .toString();
+    }
+
+    /**
+     * Filter out {@link File} objects that may be directories and map each of
+     * them to a {@link JarFile}.
+     */
+    private Stream<JarFile> mapToJarFile(File[] plugins) {
+        return Arrays.stream(plugins).filter(File::isFile).map(file -> {
+            try {
+                return new JarFile(file);
+            } catch (IOException e) {
+                getLogger().severe(String.format("Error reading %s, please "
+                        + "fix this and restart the server", file));
+                getLogger().throwing(this.getClass().getName(),
+                        "mapToJarFile", e);
+            }
+            return null;
+        });
+    }
+
+    /**
      * Parses a line of text coming from
      * {@link #scanPluginsAndLoadArtifacts()} and loads an artifact to the
      * {@link #dependencyLoader}
@@ -181,9 +209,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      *
      * @param line the line of text to parse; it is known that it starts with
      *             {@link #ARTIFACT_IDENTIFIER}
-     *
-     *             @return whether the artifact has been successfully loaded
-     *             into the class path.
+     * @return whether the artifact has been successfully loaded
+     * into the class path.
      */
     private boolean parseArtifact(final String line) {
         return dependencyLoader.loadArtifact(line.replace(ARTIFACT_IDENTIFIER,
@@ -214,13 +241,6 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * loads it into the classpath.
      * The Apache Maven repository is added by default, as is the local
      * repository for storing downloaded artifacts.
-     * <p>
-     * Example usage:
-     * <code>
-     * // Loads the kotlin runtime into the classpath.
-     * DependencyLoader loader = DependencyLoaderPlugin.forPlugin(this);
-     * loader.loadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", "1.1.1");
-     * </code>
      */
     private final class DependencyLoader {
 
@@ -237,10 +257,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
         private RepositorySystem system;
 
         /**
-         * The {@link DefaultRepositorySystemSession} for resolving this
-         * {@link org.bukkit.plugin.Plugin's artifacts.
-         * The same session is reused for each artifact of a
-         * {@link org.bukkit.plugin.Plugin}.
+         * The {@link DefaultRepositorySystemSession} for resolving artifacts.
+         * The same session is reused for each artifact.
          */
         private DefaultRepositorySystemSession session;
 
@@ -301,10 +319,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
          * <p>
          * This method builds an {@link ArtifactRequest} to resolve the artifact
          * that has been passed in.
-         * It then loads the artifact into the
-         * {@link org.bukkit.plugin.Plugin}'s classpath.
-         * <p>
-         * Returns early, if an artifact is already loaded.
+         * It then loads the artifact into the classpath.
          *
          * @param artifact the artifact to download and load into the classpath
          * @return whether the artifact has been loaded successfully
