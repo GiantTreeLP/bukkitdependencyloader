@@ -47,7 +47,7 @@ import java.util.zip.ZipFile;
  * of many plugins.
  * <p>
  * Specification of the dependencies.conf file:
- * <p>
+ * </p>
  * <ul>
  * <li>Lines that do <i>not</i> start with "artifact=" or "repository="
  * are ignored.
@@ -64,7 +64,9 @@ import java.util.zip.ZipFile;
  * </li>
  * <li>
  * For an example, look at this plugin's
- * <a href="https://github.com/GiantTreeLP/bukkitdependencyloader/blob/master/src/main/resources/dependencies.conf">dependecies.conf</a>
+ * <a href="https://github.com/GiantTreeLP/bukkitdependencyloader/blob/master/src/main/resources/dependencies.conf">
+ * dependencies.conf
+ * </a>
  * </li>
  * </ul>
  */
@@ -113,8 +115,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * extensions' constraint
      */
     @SuppressWarnings("SameParameterValue")
-    private static File[] getFilesWithExtension(File directory, String
-            extension) {
+    private static File[] getFilesWithExtension(final File directory,
+                                                final String extension) {
         return directory.listFiles((dir, name) -> name
                 .endsWith(extension));
     }
@@ -144,8 +146,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
                 String dependenciesString = getStringFromEntry(pluginJar,
                         dependenciesEntry);
 
-                Stream<String> splitStream = Arrays.stream(dependenciesString.split(
-                        "\r?\n"));
+                Stream<String> splitStream = Arrays.stream(
+                        dependenciesString.split("\r?\n"));
                 splitStream.forEach(line -> {
                     if (line.startsWith(REPOSITORY_IDENTIFIER)) {
                         parseRepository(line);
@@ -177,8 +179,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * @return a string representation of the decompressed contents of the
      * entry.
      */
-    private String getStringFromEntry(ZipFile file,
-                                      ZipEntry entry) {
+    private String getStringFromEntry(final ZipFile file,
+                                      final ZipEntry entry) {
         StringBuilder dependenciesStringBuilder = new StringBuilder();
         try (InputStream dependenciesStream = file
                 .getInputStream(entry)) {
@@ -199,9 +201,12 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     /**
      * Filter out {@link File} objects that may be directories and map each of
      * them to a {@link JarFile}.
+     *
+     * @param jarFiles the files which will be mapped to JarFiles
+     * @return A stream of JarFiles, safe for use.
      */
-    private Stream<JarFile> mapToJarFile(File[] plugins) {
-        return Arrays.stream(plugins).filter(File::isFile).map(file -> {
+    private Stream<JarFile> mapToJarFile(final File[] jarFiles) {
+        return Arrays.stream(jarFiles).filter(File::isFile).map(file -> {
             try {
                 return new JarFile(file);
             } catch (IOException e) {
