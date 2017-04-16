@@ -246,7 +246,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * <p>
      * Repositories' syntax is:
      * <code>
-     * repository=<id>:<url>
+     * repository=&lt;id&gt;:&lt;url&gt;
      * </code>
      *
      * @param line the line of text to parse; it is known that it starts with
@@ -289,7 +289,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
          * Initializes the local repository and add the central repository as
          * a default repository, so it's not necessary to add it manually.
          */
-        DependencyLoader() {
+        private DependencyLoader() {
             DefaultServiceLocator locator =
                     MavenRepositorySystemUtils.newServiceLocator();
             locator.addService(RepositoryConnectorFactory.class,
