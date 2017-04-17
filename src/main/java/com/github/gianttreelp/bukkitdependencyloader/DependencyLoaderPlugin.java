@@ -97,6 +97,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * loaded before any other plugin is initialized.
      */
     public DependencyLoaderPlugin() {
+        super();
         dependencyLoader = new DependencyLoader();
         scanPluginsAndLoadArtifacts();
     }
@@ -129,10 +130,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     private void scanPluginsAndLoadArtifacts() {
         File[] plugins = getFilesWithExtension(getDataFolder().getParentFile(),
                 ".jar");
-        if (plugins == null) {
-            getLogger().severe("No plugins found! Please report this error "
-                    + "to the author of this plugin (BukkitDependencyLoader)");
-            throw new NullPointerException("plugins should never be null");
+        if (plugins == null || plugins.length == 0) {
+            getLogger().severe("No plugins found!");
         }
 
         mapToJarFile(plugins).forEach(pluginJar -> {
@@ -374,6 +373,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
          */
         private boolean loadArtifactIntoClassPath(final Artifact artifact) {
             try {
+
                 URLClassLoader ucl = (URLClassLoader) JavaPluginLoader.class
                         .getClassLoader();
 
