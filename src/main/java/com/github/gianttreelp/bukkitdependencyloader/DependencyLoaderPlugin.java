@@ -29,9 +29,11 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -105,20 +107,23 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     /**
      * List all files in the directory given and filters them for their
      * extension.
-     * <p>
-     * This will find directories as well, filter them out manually!
+     * This returns only files!
      *
      * @param directory the directory where the files reside
-     * @param extension the extension to filter for, matches directories as
-     *                  well.
-     * @return an array containing all files satisfying the
+     * @param extension the extension to filter for
+     * @return a list containing all files satisfying the
      * extensions' constraint
      */
     @SuppressWarnings("SameParameterValue")
-    private static File[] getFilesWithExtension(final File directory,
-                                                final String extension) {
-        return directory.listFiles((dir, name) -> name
-                .endsWith(extension));
+    private static List<File> getFilesWithExtension(final File directory,
+                                                    final String extension) {
+        String[] files = directory.list();
+        if (files != null) {
+            return Arrays.stream(files).filter(s -> s.endsWith(extension))
+                    .map(s -> new File(directory, s)).filter(File::isFile)
+                    .collect(Collectors.toList());
+        }
+        return null;
     }
 
     /**
@@ -128,10 +133,11 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * plugin's {@code .jar} file.
      */
     private void scanPluginsAndLoadArtifacts() {
-        File[] plugins = getFilesWithExtension(getDataFolder().getParentFile(),
-                ".jar");
-        if (plugins == null || plugins.length == 0) {
+        List<File> plugins = getFilesWithExtension(getDataFolder()
+                .getParentFile(), ".jar");
+        if (plugins == null || plugins.size() == 0) {
             getLogger().severe("No plugins found!");
+            return;
         }
 
         mapToJarFile(plugins).forEach(pluginJar -> {
@@ -180,8 +186,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
     private String getStringFromEntry(final ZipFile file,
                                       final ZipEntry entry) {
         StringBuilder dependenciesStringBuilder = new StringBuilder();
-        try (InputStream dependenciesStream = file
-                .getInputStream(entry)) {
+        try (InputStream dependenciesStream = file.getInputStream(entry)) {
             while (dependenciesStream.available() > 0) {
                 dependenciesStringBuilder.appendCodePoint(
                         dependenciesStream.read());
@@ -192,8 +197,7 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
             getLogger().throwing(this.getClass().getName(),
                     "scanPluginsAndLoadArtifacts", e);
         }
-        return dependenciesStringBuilder
-                .toString();
+        return dependenciesStringBuilder.toString();
     }
 
     /**
@@ -203,8 +207,8 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      * @param jarFiles the files which will be mapped to JarFiles
      * @return A stream of JarFiles, safe for use.
      */
-    private Stream<JarFile> mapToJarFile(final File[] jarFiles) {
-        return Arrays.stream(jarFiles).filter(File::isFile).map(file -> {
+    private Stream<JarFile> mapToJarFile(final List<File> jarFiles) {
+        return jarFiles.stream().filter(File::isFile).map(file -> {
             try {
                 return new JarFile(file);
             } catch (IOException e) {
