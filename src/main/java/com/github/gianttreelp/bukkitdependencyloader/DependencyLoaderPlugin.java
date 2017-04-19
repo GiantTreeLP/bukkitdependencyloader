@@ -16,6 +16,7 @@ import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
+import org.eclipse.aether.transport.classpath.ClasspathTransporterFactory;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
 import org.eclipse.aether.transport.http.HttpTransporterFactory;
 
@@ -255,8 +256,10 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
      *             {@link #REPOSITORY_IDENTIFIER}
      */
     private void parseRepository(final String line) {
-        String[] split = line.replace(REPOSITORY_IDENTIFIER, "").split(":");
-        dependencyLoader.addRepository(split[0], split[1]);
+        String newLine = line.replace(REPOSITORY_IDENTIFIER, "");
+        int indexColon = newLine.indexOf(':');
+        dependencyLoader.addRepository(newLine.substring(0, indexColon),
+                newLine.substring(indexColon + 1));
     }
 
 
@@ -295,10 +298,14 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
                     MavenRepositorySystemUtils.newServiceLocator();
             locator.addService(RepositoryConnectorFactory.class,
                     BasicRepositoryConnectorFactory.class);
+
             locator.addService(TransporterFactory.class,
                     FileTransporterFactory.class);
             locator.addService(TransporterFactory.class,
                     HttpTransporterFactory.class);
+            locator.addService(TransporterFactory.class,
+                    ClasspathTransporterFactory.class);
+
             system = locator.getService(RepositorySystem.class);
             session = MavenRepositorySystemUtils.newSession();
             LocalRepository localRepo = new LocalRepository(
