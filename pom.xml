@@ -6,7 +6,7 @@
 
     <groupId>com.github.gianttreelp</groupId>
     <artifactId>bukkitdependencyloader</artifactId>
-    <version>0.3-b${env.BUILDNR}</version>
+    <version>0.4-b${env.BUILDNR}</version>
     <packaging>jar</packaging>
 
     <name>bukkit-dependency-loader</name>
