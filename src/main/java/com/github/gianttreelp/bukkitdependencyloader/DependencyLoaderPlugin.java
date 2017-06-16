@@ -362,7 +362,10 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
             try {
                 artifactResult = system.resolveArtifact(session, request);
             } catch (ArtifactResolutionException e) {
-                e.printStackTrace();
+                getLogger().severe(String.format(
+                        "Artifact %scould not be resolved!", artifact));
+                getLogger().throwing(this.getClass().getName(),
+                        "loadArtifact", e);
                 return false;
             }
             return loadArtifactIntoClassPath(artifactResult.getArtifact());
@@ -396,10 +399,10 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
             } catch (IllegalAccessException | MalformedURLException
                     | InvocationTargetException
                     | NoSuchMethodException e) {
-                getLogger().throwing("DependencyLoader",
-                        "loadArtifactIntoGlobalClassPath", e);
                 getLogger().severe(String.format("Error loading artifact %s",
                         artifact));
+                getLogger().throwing("DependencyLoader",
+                        "loadArtifactIntoGlobalClassPath", e);
                 return false;
             }
         }
