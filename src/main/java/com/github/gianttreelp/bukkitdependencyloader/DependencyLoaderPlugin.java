@@ -161,20 +161,30 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
                     .forEach(this::parseRepository);
 
             Arrays.stream(lines).filter(line ->
-                    line.startsWith(ARTIFACT_IDENTIFIER)).forEach(line -> {
-                if (parseArtifact(line)) {
-                    getLogger().info(String.format("Successfully "
-                            + "loaded %s", line));
-                } else {
-                    getLogger().severe(String.format("Error loading "
-                                    + "%s. Please check your network "
-                                    + "connection and report"
-                                    + "this to the developer of %s",
-                            line,
-                            pluginJar.getName()));
-                }
-            });
+                    line.startsWith(ARTIFACT_IDENTIFIER)).forEach(line ->
+                    loadArtifact(pluginJar, line));
         });
+    }
+
+    /**
+     * Loads an artifact using {@link #parseArtifact(String)} and logs
+     * information about the returned status.
+     *
+     * @param pluginJar the jar of which we load the artifact
+     * @param line      the line that is send on to be parsed and loaded
+     */
+    private void loadArtifact(final JarFile pluginJar, final String line) {
+        if (parseArtifact(line)) {
+            getLogger().info(String.format("Successfully "
+                    + "loaded %s", line));
+        } else {
+            getLogger().severe(String.format("Error loading "
+                            + "%s. Please check your network "
+                            + "connection and report"
+                            + "this to the developer of %s",
+                    line,
+                    pluginJar.getName()));
+        }
     }
 
     /**
