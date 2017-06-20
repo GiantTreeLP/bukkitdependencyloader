@@ -144,33 +144,35 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
         mapToJarFile(plugins).forEach(pluginJar -> {
             JarEntry dependenciesEntry = pluginJar.getJarEntry(
                     DEPENDENCIES_CONF);
-            if (dependenciesEntry != null) {
-                getLogger().info(String.format("Loading artifacts for %s",
-                        pluginJar.getName()));
-
-                String dependenciesString = getStringFromEntry(pluginJar,
-                        dependenciesEntry);
-
-                Stream<String> splitStream = Arrays.stream(
-                        dependenciesString.split("\r?\n"));
-                splitStream.forEach(line -> {
-                    if (line.startsWith(REPOSITORY_IDENTIFIER)) {
-                        parseRepository(line);
-                    } else if (line.startsWith(ARTIFACT_IDENTIFIER)) {
-                        if (parseArtifact(line)) {
-                            getLogger().info(String.format("Successfully "
-                                    + "loaded %s", line));
-                        } else {
-                            getLogger().severe(String.format("Error loading "
-                                            + "%s. Please check your network "
-                                            + "connection and report"
-                                            + "this to the developer of %s",
-                                    line,
-                                    pluginJar.getName()));
-                        }
-                    }
-                });
+            if (dependenciesEntry == null) {
+                return;
             }
+
+            getLogger().info(String.format("Loading artifacts for %s",
+                    pluginJar.getName()));
+
+            String dependenciesString = getStringFromEntry(pluginJar,
+                    dependenciesEntry);
+
+            Stream<String> splitStream = Arrays.stream(
+                    dependenciesString.split("\r?\n"));
+            splitStream.forEach(line -> {
+                if (line.startsWith(REPOSITORY_IDENTIFIER)) {
+                    parseRepository(line);
+                } else if (line.startsWith(ARTIFACT_IDENTIFIER)) {
+                    if (parseArtifact(line)) {
+                        getLogger().info(String.format("Successfully "
+                                + "loaded %s", line));
+                    } else {
+                        getLogger().severe(String.format("Error loading "
+                                        + "%s. Please check your network "
+                                        + "connection and report"
+                                        + "this to the developer of %s",
+                                line,
+                                pluginJar.getName()));
+                    }
+                }
+            });
         });
     }
 
@@ -324,8 +326,11 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
          * @param url the base url to search artifacts from
          */
         public void addRepository(final String id, final String url) {
-            repositories.add(
-                    new RemoteRepository.Builder(id, "default", url).build());
+            RemoteRepository repository = new RemoteRepository.Builder(
+                    id, "default", url).build();
+            repositories.add(repository);
+            getLogger().info(String.format("Added remote repository %s",
+                    repository));
         }
 
         /**
