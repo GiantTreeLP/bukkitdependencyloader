@@ -154,23 +154,24 @@ public final class DependencyLoaderPlugin extends JavaPlugin {
             String dependenciesString = getStringFromEntry(pluginJar,
                     dependenciesEntry);
 
-            Stream<String> splitStream = Arrays.stream(
-                    dependenciesString.split("\r?\n"));
-            splitStream.forEach(line -> {
-                if (line.startsWith(REPOSITORY_IDENTIFIER)) {
-                    parseRepository(line);
-                } else if (line.startsWith(ARTIFACT_IDENTIFIER)) {
-                    if (parseArtifact(line)) {
-                        getLogger().info(String.format("Successfully "
-                                + "loaded %s", line));
-                    } else {
-                        getLogger().severe(String.format("Error loading "
-                                        + "%s. Please check your network "
-                                        + "connection and report"
-                                        + "this to the developer of %s",
-                                line,
-                                pluginJar.getName()));
-                    }
+            String[] lines = dependenciesString.split("\r?\n");
+
+            Arrays.stream(lines).filter(line ->
+                    line.startsWith(REPOSITORY_IDENTIFIER))
+                    .forEach(this::parseRepository);
+
+            Arrays.stream(lines).filter(line ->
+                    line.startsWith(ARTIFACT_IDENTIFIER)).forEach(line -> {
+                if (parseArtifact(line)) {
+                    getLogger().info(String.format("Successfully "
+                            + "loaded %s", line));
+                } else {
+                    getLogger().severe(String.format("Error loading "
+                                    + "%s. Please check your network "
+                                    + "connection and report"
+                                    + "this to the developer of %s",
+                            line,
+                            pluginJar.getName()));
                 }
             });
         });
